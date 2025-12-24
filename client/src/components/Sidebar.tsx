@@ -43,6 +43,11 @@ export function Sidebar({ selectedCategories, onToggleCategory, onSelectPlace }:
   const { data: savedPlaces, isLoading } = useSavedPlaces();
   const deleteMutation = useDeleteSavedPlace();
 
+  const filteredSavedPlaces = (savedPlaces || []).filter((place) =>
+    place.name.toLowerCase().includes(searchPlaces.toLowerCase()) ||
+    (place.address && place.address.toLowerCase().includes(searchPlaces.toLowerCase()))
+  );
+
   return (
     <>
       <AnimatePresence>
@@ -125,8 +130,13 @@ export function Sidebar({ selectedCategories, onToggleCategory, onSelectPlace }:
                 {savedPlaces && savedPlaces.length > 0 && (
                   <div className="space-y-3 pt-4 border-t border-border/30">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-1">Saved Places</h3>
-                    <div className="space-y-2">
-                      {savedPlaces.map((place) => {
+                    {filteredSavedPlaces.length === 0 ? (
+                      <div className="text-center py-4 text-muted-foreground">
+                        <p className="text-xs">No places match "{searchPlaces}"</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {filteredSavedPlaces.map((place) => {
                         const cat = CATEGORIES.find(c => c.id === place.type) || CATEGORIES[1];
                         const Icon = cat.icon;
                         
@@ -162,7 +172,8 @@ export function Sidebar({ selectedCategories, onToggleCategory, onSelectPlace }:
                           </motion.div>
                         );
                       })}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
