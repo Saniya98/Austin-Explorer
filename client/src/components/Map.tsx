@@ -1,9 +1,9 @@
-import { useEffect, useState, useMemo } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap, ZoomControl } from "react-leaflet";
-import { Icon, DivIcon } from "leaflet";
+import { useEffect, useState, useMemo, useRef } from "react";
+import { MapContainer, TileLayer, Marker, Popup, useMap, ZoomControl, Polyline } from "react-leaflet";
+import { Icon, DivIcon, LatLngBounds } from "leaflet";
 import { useSearchPlaces, useSavePlace, useSavedPlaces } from "@/hooks/use-places";
 import { Button } from "@/components/ui/button";
-import { Loader2, Bookmark, MapPin, Navigation } from "lucide-react";
+import { Loader2, Bookmark, MapPin, Navigation, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -59,8 +59,27 @@ export default function MapComponent({ categories, flyToCoords }: MapComponentPr
   const { data: savedPlaces } = useSavedPlaces();
   const saveMutation = useSavePlace();
   const { toast } = useToast();
+  
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [routeCoords, setRouteCoords] = useState<[number, number][] | null>(null);
+  const [isGettingRoute, setIsGettingRoute] = useState(false);
+  const routeToPlace = useRef<[number, number] | null>(null);
 
   const austinCoords: [number, number] = [30.2672, -97.7431];
+
+  // Get user's current location on mount
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation([position.coords.latitude, position.coords.longitude]);
+        },
+        (error) => {
+          console.log("Could not get user location:", error);
+        }
+      );
+    }
+  }, []);
 
   const handleSave = async (place: any) => {
     try {
@@ -89,6 +108,58 @@ export default function MapComponent({ categories, flyToCoords }: MapComponentPr
 
   const isPlaceSaved = (osmId: number) => {
     return savedPlaces?.some((p) => p.osmId === osmId.toString());
+  };
+
+  const handleGetDirections = async (place: any) => {
+    if (!userLocation) {
+      toast({
+        variant: "destructive",
+        title: "Location Access Required",
+        description: "Please enable location access to get directions.",
+      });
+      return;
+    }
+
+    setIsGettingRoute(true);
+    routeToPlace.current = [place.lat, place.lon];
+
+    try {
+      // Use OSRM (Open Source Routing Machine) for free routing
+      const response = await fetch(
+        `https://router.project-osrm.org/route/v1/driving/${userLocation[1]},${userLocation[0]};${place.lon},${place.lat}?geometries=geojson`
+      );
+
+      if (!response.ok) {
+        throw new Error("Could not fetch route");
+      }
+
+      const data = await response.json();
+
+      if (data.routes && data.routes.length > 0) {
+        const route = data.routes[0];
+        const coords = route.geometry.coordinates.map((coord: [number, number]) => [
+          coord[1],
+          coord[0],
+        ]) as [number, number][];
+
+        setRouteCoords(coords);
+        toast({
+          title: "Route Found",
+          description: `${(route.distance / 1000).toFixed(1)}km away`,
+          duration: 3000,
+        });
+      } else {
+        throw new Error("No route found");
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Could Not Get Directions",
+        description: "Unable to calculate route. Please try again.",
+      });
+    } finally {
+      setIsGettingRoute(false);
+    }
   };
 
   // We memoize markers to prevent unnecessary re-renders
@@ -138,35 +209,51 @@ export default function MapComponent({ categories, flyToCoords }: MapComponentPr
                    )}
                 </div>
 
-                <Button 
-                  size="sm" 
-                  className={cn(
-                    "w-full font-semibold shadow-md",
-                    isSaved ? "bg-muted text-muted-foreground hover:bg-muted" : "bg-primary hover:bg-primary/90"
-                  )}
-                  onClick={() => !isSaved && handleSave(place)}
-                  disabled={isSaved || saveMutation.isPending}
-                >
-                  {saveMutation.isPending ? (
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  ) : isSaved ? (
-                    <>
-                      <Bookmark className="w-4 h-4 mr-2 fill-current" />
-                      Saved
-                    </>
-                  ) : (
-                    <>
-                      <Bookmark className="w-4 h-4 mr-2" />
-                      Save Place
-                    </>
-                  )}
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    className="flex-1 font-semibold shadow-md"
+                    onClick={() => handleGetDirections(place)}
+                    disabled={isGettingRoute || !userLocation}
+                  >
+                    {isGettingRoute ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <ArrowRight className="w-4 h-4 mr-2" />
+                    )}
+                    Directions
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    className={cn(
+                      "flex-1 font-semibold shadow-md",
+                      isSaved ? "bg-muted text-muted-foreground hover:bg-muted" : "bg-primary hover:bg-primary/90"
+                    )}
+                    onClick={() => !isSaved && handleSave(place)}
+                    disabled={isSaved || saveMutation.isPending}
+                  >
+                    {saveMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : isSaved ? (
+                      <>
+                        <Bookmark className="w-4 h-4 mr-2 fill-current" />
+                        Saved
+                      </>
+                    ) : (
+                      <>
+                        <Bookmark className="w-4 h-4 mr-2" />
+                        Save
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             </Popup>
           </Marker>
         );
       });
-  }, [places, savedPlaces, saveMutation.isPending]);
+  }, [places, savedPlaces, saveMutation.isPending, isGettingRoute, userLocation]);
 
   return (
     <div className="w-full h-full relative bg-slate-100">
@@ -186,7 +273,27 @@ export default function MapComponent({ categories, flyToCoords }: MapComponentPr
         
         {markers}
         
-        <MapController coords={flyToCoords} />
+        {/* User location marker */}
+        {userLocation && (
+          <Marker position={userLocation} icon={new DivIcon({
+            className: "bg-transparent",
+            html: `
+              <div class="relative w-6 h-6">
+                <div class="absolute inset-0 rounded-full bg-blue-500 animate-pulse shadow-lg"></div>
+                <div class="absolute inset-1 rounded-full bg-blue-600"></div>
+              </div>
+            `,
+            iconSize: [24, 24],
+            iconAnchor: [12, 12],
+          })} />
+        )}
+
+        {/* Route polyline */}
+        {routeCoords && (
+          <Polyline positions={routeCoords} color="#3b82f6" weight={4} opacity={0.7} />
+        )}
+        
+        <MapController coords={flyToCoords || routeToPlace.current} />
       </MapContainer>
 
       {/* Loading State Overlay */}
