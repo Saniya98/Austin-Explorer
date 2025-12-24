@@ -85,21 +85,20 @@ export function Sidebar({ selectedCategories, onToggleCategory, onSelectPlace, s
                     {CATEGORIES.map((cat) => {
                       const isSelected = selectedCategories.includes(cat.id);
                       return (
-                        <button
+                        <div
                           key={cat.id}
-                          onClick={() => onToggleCategory(cat.id)}
-                          className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-muted/30 transition-colors"
+                          className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/30 transition-colors"
                         >
-                          <div className="flex items-center gap-2">
+                          <label className="flex items-center gap-2 cursor-pointer flex-1" onClick={() => onToggleCategory(cat.id)}>
                             <cat.icon className={cn("w-4 h-4", isSelected ? cat.color : "text-muted-foreground")} />
-                            <label className="text-sm font-medium cursor-pointer">{cat.label}</label>
-                          </div>
+                            <span className="text-sm font-medium">{cat.label}</span>
+                          </label>
                           <Switch
                             checked={isSelected}
                             onCheckedChange={() => onToggleCategory(cat.id)}
                             data-testid={`toggle-${cat.id}`}
                           />
-                        </button>
+                        </div>
                       );
                     })}
                   </div>
