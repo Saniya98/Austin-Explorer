@@ -261,7 +261,7 @@ export default function MapComponent({ categories, flyToCoords }: MapComponentPr
           </Marker>
         );
       });
-  }, [places, savedPlaces, saveMutation.isPending, isGettingRoute, userLocation]);
+  }, [places, savedPlaces, saveMutation.isPending]);
 
   return (
     <div className="w-full h-full relative bg-slate-100">
