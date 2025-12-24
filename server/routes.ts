@@ -55,8 +55,6 @@ export async function registerRoutes(
         gallery: ['node["tourism"="gallery"]', 'way["tourism"="gallery"]'],
         science_centre: ['node["amenity"="science_centre"]', 'way["amenity"="science_centre"]'],
         planetarium: ['node["amenity"="planetarium"]', 'way["amenity"="planetarium"]'],
-        restaurant: ['node["amenity"="restaurant"]', 'way["amenity"="restaurant"]'],
-        cafe: ['node["amenity"="cafe"]', 'way["amenity"="cafe"]'],
       };
 
       const selectedCategories = (categories as string)?.split(',') || Object.keys(categoryMap);
@@ -111,8 +109,6 @@ export async function registerRoutes(
         else if (tags.tourism === 'gallery') type = 'gallery';
         else if (tags.amenity === 'science_centre') type = 'science_centre';
         else if (tags.amenity === 'planetarium') type = 'planetarium';
-        else if (tags.amenity === 'restaurant') type = 'restaurant';
-        else if (tags.amenity === 'cafe') type = 'cafe';
 
         // Use center for ways, or lat/lon for nodes
         const lat = el.lat || el.center?.lat;
