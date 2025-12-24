@@ -6,6 +6,7 @@ export default function Home() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([
     "playground", "park", "museum"
   ]);
+  const [searchPlaces, setSearchPlaces] = useState("");
   const [flyToCoords, setFlyToCoords] = useState<[number, number] | null>(null);
 
   const toggleCategory = (category: string) => {
@@ -26,12 +27,15 @@ export default function Home() {
         selectedCategories={selectedCategories}
         onToggleCategory={toggleCategory}
         onSelectPlace={handleSelectPlace}
+        searchPlaces={searchPlaces}
+        onSearchPlacesChange={setSearchPlaces}
       />
       
       <main className="flex-1 relative h-full">
         <MapComponent 
           categories={selectedCategories} 
           flyToCoords={flyToCoords}
+          searchQuery={searchPlaces}
         />
       </main>
     </div>

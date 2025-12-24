@@ -26,6 +26,8 @@ interface SidebarProps {
   selectedCategories: string[];
   onToggleCategory: (category: string) => void;
   onSelectPlace: (lat: number, lon: number) => void;
+  searchPlaces: string;
+  onSearchPlacesChange: (query: string) => void;
 }
 
 const CATEGORIES = [
@@ -37,9 +39,8 @@ const CATEGORIES = [
   { id: "planetarium", label: "Planetariums", icon: Telescope, color: "text-indigo-600" },
 ];
 
-export function Sidebar({ selectedCategories, onToggleCategory, onSelectPlace }: SidebarProps) {
+export function Sidebar({ selectedCategories, onToggleCategory, onSelectPlace, searchPlaces, onSearchPlacesChange }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(true);
-  const [searchPlaces, setSearchPlaces] = useState("");
   const { data: savedPlaces, isLoading } = useSavedPlaces();
   const deleteMutation = useDeleteSavedPlace();
 
@@ -103,7 +104,7 @@ export function Sidebar({ selectedCategories, onToggleCategory, onSelectPlace }:
                     type="text"
                     placeholder="Search places..."
                     value={searchPlaces}
-                    onChange={(e) => setSearchPlaces(e.target.value)}
+                    onChange={(e) => onSearchPlacesChange(e.target.value)}
                     className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                     data-testid="input-search-places"
                   />

@@ -52,9 +52,10 @@ function MapController({ coords }: { coords: [number, number] | null }) {
 interface MapComponentProps {
   categories: string[];
   flyToCoords: [number, number] | null;
+  searchQuery?: string;
 }
 
-export default function MapComponent({ categories, flyToCoords }: MapComponentProps) {
+export default function MapComponent({ categories, flyToCoords, searchQuery = "" }: MapComponentProps) {
   const { data: places, isLoading, isError } = useSearchPlaces(categories);
   const { data: savedPlaces } = useSavedPlaces();
   const saveMutation = useSavePlace();
@@ -174,9 +175,17 @@ export default function MapComponent({ categories, flyToCoords }: MapComponentPr
   const markers = useMemo(() => {
     if (!places) return [];
     
+    // Filter by search query if provided
+    let filtered = places;
+    if (searchQuery.trim()) {
+      filtered = places.filter(p => 
+        p.name?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    
     // Only show up to 100 markers to keep performance high
     // Prioritize named places
-    return places
+    return filtered
       .filter(p => p.name) 
       .slice(0, 100)
       .map((place) => {
@@ -238,7 +247,7 @@ export default function MapComponent({ categories, flyToCoords }: MapComponentPr
           </Marker>
         );
       });
-  }, [places, savedPlaces, saveMutation.isPending]);
+  }, [places, savedPlaces, saveMutation.isPending, searchQuery]);
 
   return (
     <div className="w-full h-full relative bg-slate-100">
