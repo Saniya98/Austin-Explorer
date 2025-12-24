@@ -188,74 +188,33 @@ export default function MapComponent({ categories, flyToCoords }: MapComponentPr
             position={[place.lat, place.lon]}
             icon={createCustomIcon(place.type, !!isSaved)}
           >
-            <Popup className="bg-transparent border-none shadow-none">
-              <div className="flex flex-col gap-3 min-w-[200px]">
-                <div>
-                  <h3 className="font-display font-bold text-lg leading-tight text-foreground">
+            <Popup className="bg-transparent border-none shadow-none leaflet-popup-content-wrapper p-0">
+              <div className="bg-white rounded-lg p-4 shadow-lg border border-border/20 min-w-[220px]">
+                <div className="mb-3">
+                  <h3 className="font-semibold text-base leading-tight text-foreground mb-2">
                     {place.name || "Unknown Location"}
                   </h3>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs uppercase font-bold tracking-wider text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs uppercase font-bold tracking-wider text-muted-foreground bg-muted px-2 py-1 rounded text-[11px]">
                       {place.type.replace('_', ' ')}
                     </span>
-                    {place.tags?.wheelchair === 'yes' && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 font-medium">
-                        Accessible
-                      </span>
-                    )}
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                   {place.tags?.website && (
-                     <a href={place.tags.website} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline block truncate">
-                       Visit Website
-                     </a>
-                   )}
-                   {place.tags?.['addr:street'] && (
-                     <p className="text-xs text-muted-foreground">{place.tags['addr:street']}</p>
-                   )}
-                </div>
-
-                <div className="flex gap-2">
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    className="flex-1 font-semibold shadow-md"
-                    onClick={() => handleGetDirections(place)}
-                    disabled={isGettingRoute || !userLocation}
-                  >
-                    {isGettingRoute ? (
-                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    ) : (
-                      <ArrowRight className="w-4 h-4 mr-2" />
-                    )}
-                    Directions
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    className={cn(
-                      "flex-1 font-semibold shadow-md",
-                      isSaved ? "bg-muted text-muted-foreground hover:bg-muted" : "bg-primary hover:bg-primary/90"
-                    )}
-                    onClick={() => !isSaved && handleSave(place)}
-                    disabled={isSaved || saveMutation.isPending}
-                  >
-                    {saveMutation.isPending ? (
-                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    ) : isSaved ? (
-                      <>
-                        <Bookmark className="w-4 h-4 mr-2 fill-current" />
-                        Saved
-                      </>
-                    ) : (
-                      <>
-                        <Bookmark className="w-4 h-4 mr-2" />
-                        Save
-                      </>
-                    )}
-                  </Button>
-                </div>
+                <button
+                  onClick={() => handleGetDirections(place)}
+                  disabled={isGettingRoute || !userLocation}
+                  className="text-sm font-semibold text-primary hover:text-primary/80 transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  {isGettingRoute ? (
+                    <span className="flex items-center gap-1">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      Getting directions...
+                    </span>
+                  ) : (
+                    "Directions"
+                  )}
+                </button>
               </div>
             </Popup>
           </Marker>
