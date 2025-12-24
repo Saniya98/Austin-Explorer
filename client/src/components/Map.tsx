@@ -19,7 +19,7 @@ const createCustomIcon = (type: string, isSaved: boolean) => {
     gallery: "🎨",
     science_centre: "🔭",
     planetarium: "🛸",
-    restaurant: "🍕",
+    restaurant: "🍽️",
     cafe: "☕",
   };
 
