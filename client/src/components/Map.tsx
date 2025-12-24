@@ -13,14 +13,14 @@ import "leaflet/dist/leaflet.css";
 // Custom icons setup with emoji markers
 const createCustomIcon = (type: string, isSaved: boolean) => {
   const emojiMap: Record<string, string> = {
-    playground: "🎪",
-    park: "🌳",
-    museum: "🏛️",
-    gallery: "🎨",
-    science_centre: "🔬",
-    planetarium: "🌌",
-    restaurant: "🍽️",
-    cafe: "☕",
+    playground: "🛝",
+    park: "🌲",
+    museum: "🗿",
+    gallery: "🖼️",
+    science_centre: "🧪",
+    planetarium: "🪐",
+    restaurant: "🍴",
+    cafe: "🧁",
   };
 
   const emoji = emojiMap[type] || "📍";
