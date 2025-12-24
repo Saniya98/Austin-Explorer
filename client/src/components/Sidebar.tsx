@@ -114,9 +114,10 @@ export function Sidebar({ selectedCategories, onToggleCategory, onSelectPlace }:
                         {CATEGORIES.map((cat) => (
                           <button
                             key={cat.id}
+                            type="button"
                             onClick={() => onToggleCategory(cat.id)}
                             className={cn(
-                              "w-full flex items-center justify-between p-3 rounded-xl text-left transition-all duration-200 border",
+                              "w-full flex items-center justify-between p-3 rounded-xl text-left transition-all duration-200 border cursor-pointer",
                               selectedCategories.includes(cat.id)
                                 ? "bg-card border-primary/20 shadow-sm"
                                 : "bg-transparent border-transparent hover:bg-muted/50 text-muted-foreground"
