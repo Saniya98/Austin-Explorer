@@ -111,6 +111,8 @@ export async function registerRoutes(
         else if (tags.tourism === 'gallery') type = 'gallery';
         else if (tags.amenity === 'science_centre') type = 'science_centre';
         else if (tags.amenity === 'planetarium') type = 'planetarium';
+        else if (tags.amenity === 'restaurant') type = 'restaurant';
+        else if (tags.amenity === 'cafe') type = 'cafe';
 
         // Use center for ways, or lat/lon for nodes
         const lat = el.lat || el.center?.lat;
