@@ -67,7 +67,7 @@ export default function MapComponent({ categories, flyToCoords }: MapComponentPr
 
   const austinCoords: [number, number] = [30.2672, -97.7431];
 
-  // Get user's current location on mount
+  // Get user's current location on mount, fallback to Austin center
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -75,11 +75,16 @@ export default function MapComponent({ categories, flyToCoords }: MapComponentPr
           setUserLocation([position.coords.latitude, position.coords.longitude]);
         },
         (error) => {
-          console.log("Could not get user location:", error);
+          // If geolocation is denied or unavailable, use Austin center as fallback
+          console.log("Using Austin center as fallback location");
+          setUserLocation(austinCoords);
         }
       );
+    } else {
+      // Fallback if geolocation API not available
+      setUserLocation(austinCoords);
     }
-  }, []);
+  }, [austinCoords]);
 
   const handleSave = async (place: any) => {
     try {
@@ -114,8 +119,8 @@ export default function MapComponent({ categories, flyToCoords }: MapComponentPr
     if (!userLocation) {
       toast({
         variant: "destructive",
-        title: "Location Access Required",
-        description: "Please enable location access to get directions.",
+        title: "Unable to Get Directions",
+        description: "Could not determine location. Please try again.",
       });
       return;
     }
@@ -126,11 +131,11 @@ export default function MapComponent({ categories, flyToCoords }: MapComponentPr
     try {
       // Use OSRM (Open Source Routing Machine) for free routing
       const response = await fetch(
-        `https://router.project-osrm.org/route/v1/driving/${userLocation[1]},${userLocation[0]};${place.lon},${place.lat}?geometries=geojson`
+        `https://router.project-osrm.org/route/v1/driving/${userLocation[1]},${userLocation[0]};${place.lon},${place.lat}?geometries=geojson&steps=true&overview=full`
       );
 
       if (!response.ok) {
-        throw new Error("Could not fetch route");
+        throw new Error(`Route API error: ${response.status}`);
       }
 
       const data = await response.json();
@@ -143,19 +148,22 @@ export default function MapComponent({ categories, flyToCoords }: MapComponentPr
         ]) as [number, number][];
 
         setRouteCoords(coords);
+        const distanceKm = (route.distance / 1000).toFixed(1);
+        const durationMins = Math.round(route.duration / 60);
         toast({
-          title: "Route Found",
-          description: `${(route.distance / 1000).toFixed(1)}km away`,
-          duration: 3000,
+          title: "Directions Ready",
+          description: `${distanceKm}km away • ${durationMins} min drive`,
+          duration: 4000,
         });
       } else {
-        throw new Error("No route found");
+        throw new Error("No route available");
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Route error:", error);
       toast({
         variant: "destructive",
-        title: "Could Not Get Directions",
-        description: "Unable to calculate route. Please try again.",
+        title: "Could Not Calculate Route",
+        description: "Please try a different location or check your internet connection.",
       });
     } finally {
       setIsGettingRoute(false);
