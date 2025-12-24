@@ -13,31 +13,43 @@ import "leaflet/dist/leaflet.css";
 // Custom icons setup with emoji markers
 const createCustomIcon = (type: string, isSaved: boolean) => {
   const emojiMap: Record<string, string> = {
-    playground: "🛝",
-    park: "🌲",
-    museum: "🗿",
-    gallery: "🖼️",
-    science_centre: "🧪",
-    planetarium: "🪐",
-    restaurant: "🍴",
-    cafe: "🧁",
+    playground: "🎢",
+    park: "🏞️",
+    museum: "🎭",
+    gallery: "🎨",
+    science_centre: "🔭",
+    planetarium: "🛸",
+    restaurant: "🍕",
+    cafe: "☕",
+  };
+
+  const colorMap: Record<string, string> = {
+    playground: "#FF6B6B",
+    park: "#4CAF50",
+    museum: "#9C27B0",
+    gallery: "#E91E63",
+    science_centre: "#2196F3",
+    planetarium: "#673AB7",
+    restaurant: "#FF9800",
+    cafe: "#795548",
   };
 
   const emoji = emojiMap[type] || "📍";
-  const savedClass = isSaved ? "ring-4 ring-yellow-400" : "";
+  const color = colorMap[type] || "#2196F3";
+  const savedClass = isSaved ? "ring-4 ring-yellow-400 ring-offset-2" : "";
 
   return new DivIcon({
     className: "bg-transparent",
     html: `
-      <div class="relative w-12 h-12 transform transition-transform hover:scale-125" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
-        <div class="absolute inset-0 rounded-full bg-white border-4 border-blue-500 shadow-lg ${savedClass} flex items-center justify-center text-lg leading-none">
+      <div class="relative w-14 h-14 transform transition-transform hover:scale-110" style="filter: drop-shadow(0 3px 6px rgba(0,0,0,0.15));">
+        <div class="absolute inset-0 rounded-full shadow-lg ${savedClass} flex items-center justify-center text-2xl leading-none" style="background-color: ${color}; border: 3px solid white;">
           ${emoji}
         </div>
       </div>
     `,
-    iconSize: [48, 48],
-    iconAnchor: [24, 48],
-    popupAnchor: [0, -48],
+    iconSize: [56, 56],
+    iconAnchor: [28, 56],
+    popupAnchor: [0, -56],
   });
 };
 
