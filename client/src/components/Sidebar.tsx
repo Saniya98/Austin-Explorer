@@ -42,8 +42,14 @@ const CATEGORIES = [
 export function Sidebar({ selectedCategories, onToggleCategory, onSelectPlace }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<"explore" | "saved">("explore");
+  const [searchQuery, setSearchQuery] = useState("");
   const { data: savedPlaces, isLoading } = useSavedPlaces();
   const deleteMutation = useDeleteSavedPlace();
+
+  const filteredCategories = CATEGORIES.filter((cat) =>
+    cat.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    cat.id.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <>
@@ -108,35 +114,52 @@ export function Sidebar({ selectedCategories, onToggleCategory, onSelectPlace }:
               <div className="py-4 space-y-6">
                 {activeTab === "explore" ? (
                   <div className="space-y-4">
+                    <div className="space-y-3">
+                      <input
+                        type="text"
+                        placeholder="Search categories..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                        data-testid="input-search-categories"
+                      />
+                    </div>
                     <div className="space-y-1">
                       <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-2">Filters</h3>
                       <div className="space-y-1 mt-2">
-                        {CATEGORIES.map((cat) => (
-                          <button
-                            key={cat.id}
-                            type="button"
-                            onClick={() => onToggleCategory(cat.id)}
-                            className={cn(
-                              "w-full flex items-center justify-between p-3 rounded-xl text-left transition-all duration-200 border cursor-pointer",
-                              selectedCategories.includes(cat.id)
-                                ? "bg-card border-primary/20 shadow-sm"
-                                : "bg-transparent border-transparent hover:bg-muted/50 text-muted-foreground"
-                            )}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className={cn("p-2 rounded-lg bg-background", selectedCategories.includes(cat.id) ? "shadow-sm" : "")}>
-                                <cat.icon className={cn("w-4 h-4", selectedCategories.includes(cat.id) ? cat.color : "text-muted-foreground")} />
+                        {filteredCategories.length > 0 ? (
+                          filteredCategories.map((cat) => (
+                            <button
+                              key={cat.id}
+                              type="button"
+                              onClick={() => onToggleCategory(cat.id)}
+                              className={cn(
+                                "w-full flex items-center justify-between p-3 rounded-xl text-left transition-all duration-200 border cursor-pointer",
+                                selectedCategories.includes(cat.id)
+                                  ? "bg-card border-primary/20 shadow-sm"
+                                  : "bg-transparent border-transparent hover:bg-muted/50 text-muted-foreground"
+                              )}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className={cn("p-2 rounded-lg bg-background", selectedCategories.includes(cat.id) ? "shadow-sm" : "")}>
+                                  <cat.icon className={cn("w-4 h-4", selectedCategories.includes(cat.id) ? cat.color : "text-muted-foreground")} />
+                                </div>
+                                <span className="font-medium text-sm">{cat.label}</span>
                               </div>
-                              <span className="font-medium text-sm">{cat.label}</span>
-                            </div>
-                            {selectedCategories.includes(cat.id) && (
-                              <motion.div
-                                layoutId="check"
-                                className="w-2 h-2 rounded-full bg-primary"
-                              />
-                            )}
-                          </button>
-                        ))}
+                              {selectedCategories.includes(cat.id) && (
+                                <motion.div
+                                  layoutId="check"
+                                  className="w-2 h-2 rounded-full bg-primary"
+                                />
+                              )}
+                            </button>
+                          ))
+                        ) : (
+                          <div className="text-center py-8 text-muted-foreground">
+                            <p className="text-sm">No categories found</p>
+                            <p className="text-xs mt-1">Try a different search</p>
+                          </div>
+                        )}
                       </div>
                     </div>
 
