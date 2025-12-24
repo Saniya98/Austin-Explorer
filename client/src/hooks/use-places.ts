@@ -11,9 +11,8 @@ export function useSearchPlaces(categories: string[]) {
   const categoryString = categories.join(",");
   
   return useQuery({
-    queryKey: [api.places.search.path, { categories: categoryString }],
+    queryKey: [api.places.search.path, categoryString],
     queryFn: async () => {
-      // If no categories selected, return empty array to avoid massive queries
       if (categories.length === 0) return [];
       
       const url = `${api.places.search.path}?categories=${encodeURIComponent(categoryString)}`;
@@ -22,7 +21,7 @@ export function useSearchPlaces(categories: string[]) {
       return api.places.search.responses[200].parse(await res.json());
     },
     enabled: categories.length > 0,
-    staleTime: 1000 * 60 * 5, // Cache search results for 5 minutes
+    staleTime: 0, // Always fetch fresh when categories change
   });
 }
 
