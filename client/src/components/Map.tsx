@@ -201,20 +201,38 @@ export default function MapComponent({ categories, flyToCoords }: MapComponentPr
                   </div>
                 </div>
 
-                <button
-                  onClick={() => handleGetDirections(place)}
-                  disabled={isGettingRoute || !userLocation}
-                  className="text-sm font-semibold text-primary hover:text-primary/80 transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  {isGettingRoute ? (
-                    <span className="flex items-center gap-1">
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleGetDirections(place)}
+                    disabled={isGettingRoute || !userLocation}
+                    className="flex-1 text-sm font-semibold text-primary hover:text-primary/80 transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    {isGettingRoute ? (
+                      <span className="flex items-center justify-center gap-1">
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      </span>
+                    ) : (
+                      "Directions"
+                    )}
+                  </button>
+                  <button
+                    onClick={() => !isSaved && handleSave(place)}
+                    disabled={isSaved || saveMutation.isPending}
+                    className={`flex-1 text-sm font-semibold transition-colors cursor-pointer ${
+                      isSaved 
+                        ? "text-muted-foreground" 
+                        : "text-primary hover:text-primary/80"
+                    } disabled:opacity-50`}
+                  >
+                    {saveMutation.isPending ? (
                       <Loader2 className="w-3 h-3 animate-spin" />
-                      Getting directions...
-                    </span>
-                  ) : (
-                    "Directions"
-                  )}
-                </button>
+                    ) : isSaved ? (
+                      "Saved"
+                    ) : (
+                      "Save"
+                    )}
+                  </button>
+                </div>
               </div>
             </Popup>
           </Marker>
