@@ -82,19 +82,26 @@ export function Sidebar({ selectedCategories, onToggleCategory, onSelectPlace, s
                 <div className="space-y-3">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-1">Activities</h3>
                   <div className="space-y-2.5">
-                    {CATEGORIES.map((cat) => (
-                      <div key={cat.id} className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <cat.icon className={cn("w-4 h-4", cat.color)} />
-                          <label className="text-sm font-medium cursor-pointer">{cat.label}</label>
-                        </div>
-                        <Switch
-                          checked={selectedCategories.includes(cat.id)}
-                          onCheckedChange={() => onToggleCategory(cat.id)}
-                          data-testid={`toggle-${cat.id}`}
-                        />
-                      </div>
-                    ))}
+                    {CATEGORIES.map((cat) => {
+                      const isSelected = selectedCategories.includes(cat.id);
+                      return (
+                        <button
+                          key={cat.id}
+                          onClick={() => onToggleCategory(cat.id)}
+                          className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-muted/30 transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            <cat.icon className={cn("w-4 h-4", isSelected ? cat.color : "text-muted-foreground")} />
+                            <label className="text-sm font-medium cursor-pointer">{cat.label}</label>
+                          </div>
+                          <Switch
+                            checked={isSelected}
+                            onCheckedChange={() => onToggleCategory(cat.id)}
+                            data-testid={`toggle-${cat.id}`}
+                          />
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
