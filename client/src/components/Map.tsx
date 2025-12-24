@@ -103,12 +103,20 @@ export default function MapComponent({ categories, flyToCoords, searchQuery = ""
         description: `${place.name || "Location"} has been added to your saved places.`,
         duration: 3000,
       });
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Could not save this location. It might already be saved.",
-      });
+    } catch (error: any) {
+      if (error.message?.includes("401")) {
+        toast({
+          variant: "destructive",
+          title: "Sign in required",
+          description: "Please sign in to save places to your account.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Could not save this location. It might already be saved.",
+        });
+      }
     }
   };
 

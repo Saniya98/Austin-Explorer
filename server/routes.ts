@@ -3,22 +3,29 @@ import type { Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
+import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // --- Saved Places Routes ---
+  // Setup Replit Auth
+  await setupAuth(app);
+  registerAuthRoutes(app);
 
-  app.get(api.savedPlaces.list.path, async (req, res) => {
-    const places = await storage.getSavedPlaces();
+  // --- Saved Places Routes (Protected) ---
+
+  app.get(api.savedPlaces.list.path, isAuthenticated, async (req: any, res) => {
+    const userId = req.user.claims.sub;
+    const places = await storage.getSavedPlaces(userId);
     res.json(places);
   });
 
-  app.post(api.savedPlaces.create.path, async (req, res) => {
+  app.post(api.savedPlaces.create.path, isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
       const input = api.savedPlaces.create.input.parse(req.body);
-      const place = await storage.createSavedPlace(input);
+      const place = await storage.createSavedPlace({ ...input, userId });
       res.status(201).json(place);
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -31,9 +38,19 @@ export async function registerRoutes(
     }
   });
 
-  app.delete(api.savedPlaces.delete.path, async (req, res) => {
-    await storage.deleteSavedPlace(Number(req.params.id));
+  app.delete(api.savedPlaces.delete.path, isAuthenticated, async (req: any, res) => {
+    const userId = req.user.claims.sub;
+    await storage.deleteSavedPlace(Number(req.params.id), userId);
     res.status(204).send();
+  });
+
+  app.patch("/api/saved-places/:id/visited", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.claims.sub;
+    const updated = await storage.toggleVisited(Number(req.params.id), userId);
+    if (!updated) {
+      return res.status(404).json({ message: "Place not found" });
+    }
+    res.json(updated);
   });
 
   // --- OSM Proxy Route ---

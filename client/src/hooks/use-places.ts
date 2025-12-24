@@ -33,10 +33,12 @@ export function useSavedPlaces() {
   return useQuery({
     queryKey: [api.savedPlaces.list.path],
     queryFn: async () => {
-      const res = await fetch(api.savedPlaces.list.path);
+      const res = await fetch(api.savedPlaces.list.path, { credentials: "include" });
+      if (res.status === 401) return []; // Not logged in - return empty
       if (!res.ok) throw new Error("Failed to fetch saved places");
       return api.savedPlaces.list.responses[200].parse(await res.json());
     },
+    retry: false,
   });
 }
 
@@ -49,8 +51,12 @@ export function useSavePlace() {
         method: api.savedPlaces.create.method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(validated),
+        credentials: "include",
       });
 
+      if (res.status === 401) {
+        throw new Error("401: Unauthorized - Please log in to save places");
+      }
       if (!res.ok) {
         if (res.status === 400) {
           const error = api.savedPlaces.create.responses[400].parse(await res.json());
@@ -73,10 +79,32 @@ export function useDeleteSavedPlace() {
       const url = buildUrl(api.savedPlaces.delete.path, { id });
       const res = await fetch(url, {
         method: api.savedPlaces.delete.method,
+        credentials: "include",
       });
 
+      if (res.status === 401) throw new Error("401: Unauthorized");
       if (res.status === 404) throw new Error("Place not found");
       if (!res.ok) throw new Error("Failed to delete place");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.savedPlaces.list.path] });
+    },
+  });
+}
+
+export function useToggleVisited() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`/api/saved-places/${id}/visited`, {
+        method: "PATCH",
+        credentials: "include",
+      });
+
+      if (res.status === 401) throw new Error("401: Unauthorized");
+      if (res.status === 404) throw new Error("Place not found");
+      if (!res.ok) throw new Error("Failed to toggle visited status");
+      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.savedPlaces.list.path] });

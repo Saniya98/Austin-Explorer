@@ -12,15 +12,22 @@ import {
   ChevronRight,
   ChevronLeft,
   Trash2,
-  ExternalLink
+  ExternalLink,
+  LogIn,
+  LogOut,
+  User,
+  CheckCircle2,
+  Circle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { useSavedPlaces, useDeleteSavedPlace } from "@/hooks/use-places";
+import { useSavedPlaces, useDeleteSavedPlace, useToggleVisited } from "@/hooks/use-places";
+import { useAuth } from "@/hooks/use-auth";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface SidebarProps {
   selectedCategories: string[];
@@ -41,8 +48,10 @@ const CATEGORIES = [
 
 export function Sidebar({ selectedCategories, onToggleCategory, onSelectPlace, searchPlaces, onSearchPlacesChange }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(true);
+  const { user, isLoading: authLoading, isAuthenticated } = useAuth();
   const { data: savedPlaces, isLoading } = useSavedPlaces();
   const deleteMutation = useDeleteSavedPlace();
+  const toggleVisitedMutation = useToggleVisited();
 
   const filteredSavedPlaces = (savedPlaces || []).filter((place) =>
     place.name.toLowerCase().includes(searchPlaces.toLowerCase()) ||
@@ -62,14 +71,55 @@ export function Sidebar({ selectedCategories, onToggleCategory, onSelectPlace, s
           >
             {/* Header */}
             <div className="p-6 pb-2">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/20">
-                  <MapIcon className="text-white w-6 h-6" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/20">
+                    <MapIcon className="text-white w-6 h-6" />
+                  </div>
+                  <div>
+                    <h1 className="font-display font-bold text-xl leading-none tracking-tight">AustinKids</h1>
+                    <p className="text-xs text-muted-foreground mt-1">Family Friendly Map</p>
+                  </div>
                 </div>
-                <div>
-                  <h1 className="font-display font-bold text-xl leading-none tracking-tight">AustinKids</h1>
-                  <p className="text-xs text-muted-foreground mt-1">Family Friendly Map</p>
-                </div>
+              </div>
+              
+              {/* Login/User Section */}
+              <div className="mt-4">
+                {authLoading ? (
+                  <div className="h-9 bg-muted/30 rounded-lg animate-pulse" />
+                ) : isAuthenticated && user ? (
+                  <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-muted/30">
+                    <div className="flex items-center gap-2">
+                      <Avatar className="w-7 h-7">
+                        <AvatarImage src={user.profileImageUrl || undefined} />
+                        <AvatarFallback>
+                          <User className="w-4 h-4" />
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm font-medium truncate max-w-[120px]">
+                        {user.firstName || user.email || "User"}
+                      </span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => window.location.href = "/api/logout"}
+                      className="text-muted-foreground hover:text-foreground"
+                      data-testid="button-logout"
+                    >
+                      <LogOut className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    onClick={() => window.location.href = "/api/login"}
+                    className="w-full"
+                    data-testid="button-login"
+                  >
+                    <LogIn className="w-4 h-4 mr-2" />
+                    Sign in to save places
+                  </Button>
+                )}
               </div>
             </div>
 
@@ -133,52 +183,96 @@ export function Sidebar({ selectedCategories, onToggleCategory, onSelectPlace, s
                   </p>
                 </div>
 
-                {/* Saved Places Section */}
-                {savedPlaces && savedPlaces.length > 0 && (
+                {/* Saved Places Section - Only show if authenticated */}
+                {isAuthenticated && (
                   <div className="space-y-3 pt-4 border-t border-border/30">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-1">Saved Places</h3>
-                    {filteredSavedPlaces.length === 0 ? (
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-1">
+                      My Saved Places {savedPlaces && savedPlaces.length > 0 && `(${savedPlaces.length})`}
+                    </h3>
+                    {isLoading ? (
+                      <div className="space-y-2">
+                        {[1, 2].map((i) => (
+                          <div key={i} className="h-16 bg-muted/30 rounded-lg animate-pulse" />
+                        ))}
+                      </div>
+                    ) : !savedPlaces || savedPlaces.length === 0 ? (
+                      <div className="text-center py-4 text-muted-foreground">
+                        <p className="text-xs">No saved places yet</p>
+                        <p className="text-xs mt-1">Click on a map marker to save it</p>
+                      </div>
+                    ) : filteredSavedPlaces.length === 0 ? (
                       <div className="text-center py-4 text-muted-foreground">
                         <p className="text-xs">No places match "{searchPlaces}"</p>
                       </div>
                     ) : (
                       <div className="space-y-2">
                         {filteredSavedPlaces.map((place) => {
-                        const cat = CATEGORIES.find(c => c.id === place.type) || CATEGORIES[1];
-                        const Icon = cat.icon;
-                        
-                        return (
-                          <motion.div
-                            key={place.id}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="group bg-card/50 rounded-lg border border-border/30 p-2.5 hover:shadow-sm hover:border-primary/20 transition-all duration-300"
-                          >
-                            <div className="flex items-start justify-between gap-2">
-                              <div 
-                                className="flex-1 cursor-pointer"
-                                onClick={() => onSelectPlace(place.lat, place.lon)}
-                              >
-                                <div className="flex items-center gap-2 mb-0.5">
-                                  <Icon className={cn("w-3 h-3", cat.color)} />
-                                  <p className="font-semibold text-xs text-foreground">
-                                    {place.name}
-                                  </p>
+                          const cat = CATEGORIES.find(c => c.id === place.type) || CATEGORIES[1];
+                          const Icon = cat.icon;
+                          
+                          return (
+                            <motion.div
+                              key={place.id}
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              className={cn(
+                                "group bg-card/50 rounded-lg border border-border/30 p-2.5 hover:shadow-sm hover:border-primary/20 transition-all duration-300",
+                                place.visited && "bg-green-50/50 dark:bg-green-950/20 border-green-200/50 dark:border-green-900/30"
+                              )}
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <div 
+                                  className="flex-1 cursor-pointer"
+                                  onClick={() => onSelectPlace(place.lat, place.lon)}
+                                >
+                                  <div className="flex items-center gap-2 mb-0.5">
+                                    <Icon className={cn("w-3 h-3", cat.color)} />
+                                    <p className={cn(
+                                      "font-semibold text-xs text-foreground",
+                                      place.visited && "line-through text-muted-foreground"
+                                    )}>
+                                      {place.name}
+                                    </p>
+                                    {place.visited && (
+                                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
+                                        Visited
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  {place.address && (
+                                    <p className="text-xs text-muted-foreground/70 line-clamp-1 ml-5">{place.address}</p>
+                                  )}
                                 </div>
-                                {place.address && (
-                                  <p className="text-xs text-muted-foreground/70 line-clamp-1 ml-5">{place.address}</p>
-                                )}
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                  <button
+                                    onClick={() => toggleVisitedMutation.mutate(place.id)}
+                                    className={cn(
+                                      "p-1 rounded transition-colors",
+                                      place.visited 
+                                        ? "text-green-600 hover:text-green-700" 
+                                        : "text-muted-foreground hover:text-green-600"
+                                    )}
+                                    title={place.visited ? "Mark as not visited" : "Mark as visited"}
+                                    data-testid={`toggle-visited-${place.id}`}
+                                  >
+                                    {place.visited ? (
+                                      <CheckCircle2 className="w-4 h-4" />
+                                    ) : (
+                                      <Circle className="w-4 h-4" />
+                                    )}
+                                  </button>
+                                  <button
+                                    onClick={() => deleteMutation.mutate(place.id)}
+                                    className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/30 text-muted-foreground hover:text-red-500 transition-colors"
+                                    data-testid={`delete-place-${place.id}`}
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                </div>
                               </div>
-                              <button
-                                onClick={() => deleteMutation.mutate(place.id)}
-                                className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/30 text-muted-foreground hover:text-red-500 transition-colors flex-shrink-0"
-                              >
-                                <Trash2 className="w-3 h-3" />
-                              </button>
-                            </div>
-                          </motion.div>
-                        );
-                      })}
+                            </motion.div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
