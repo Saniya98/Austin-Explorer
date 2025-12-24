@@ -15,7 +15,9 @@ import {
   ChevronLeft,
   X,
   Trash2,
-  ExternalLink
+  ExternalLink,
+  UtensilsCrossed,
+  Coffee
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -37,6 +39,8 @@ const CATEGORIES = [
   { id: "gallery", label: "Galleries", icon: Palette, color: "text-purple-600" },
   { id: "science_centre", label: "Science Centers", icon: Rocket, color: "text-blue-600" },
   { id: "planetarium", label: "Planetariums", icon: Telescope, color: "text-indigo-600" },
+  { id: "restaurant", label: "Restaurants", icon: UtensilsCrossed, color: "text-orange-600" },
+  { id: "cafe", label: "Cafés", icon: Coffee, color: "text-orange-500" },
 ];
 
 export function Sidebar({ selectedCategories, onToggleCategory, onSelectPlace }: SidebarProps) {

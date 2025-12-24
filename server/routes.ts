@@ -55,6 +55,8 @@ export async function registerRoutes(
         gallery: ['node["tourism"="gallery"]', 'way["tourism"="gallery"]'],
         science_centre: ['node["amenity"="science_centre"]', 'way["amenity"="science_centre"]'],
         planetarium: ['node["amenity"="planetarium"]', 'way["amenity"="planetarium"]'],
+        restaurant: ['node["amenity"="restaurant"]', 'way["amenity"="restaurant"]'],
+        cafe: ['node["amenity"="cafe"]', 'way["amenity"="cafe"]'],
       };
 
       const selectedCategories = (categories as string)?.split(',') || Object.keys(categoryMap);
