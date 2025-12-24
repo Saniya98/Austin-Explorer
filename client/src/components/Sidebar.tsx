@@ -115,9 +115,13 @@ export function Sidebar({ selectedCategories, onToggleCategory, onSelectPlace }:
                           <button
                             key={cat.id}
                             type="button"
-                            onClick={() => onToggleCategory(cat.id)}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              console.log("Toggling category:", cat.id);
+                              onToggleCategory(cat.id);
+                            }}
                             className={cn(
-                              "w-full flex items-center justify-between p-3 rounded-xl text-left transition-all duration-200 border cursor-pointer",
+                              "w-full flex items-center justify-between p-3 rounded-xl text-left transition-all duration-200 border cursor-pointer hover:opacity-80",
                               selectedCategories.includes(cat.id)
                                 ? "bg-card border-primary/20 shadow-sm"
                                 : "bg-transparent border-transparent hover:bg-muted/50 text-muted-foreground"
