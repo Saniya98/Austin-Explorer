@@ -10,33 +10,34 @@ import { cn } from "@/lib/utils";
 // Fix Leaflet icon issue
 import "leaflet/dist/leaflet.css";
 
-// Custom icons setup
+// Custom icons setup with emoji markers
 const createCustomIcon = (type: string, isSaved: boolean) => {
-  const colorMap: Record<string, string> = {
-    playground: "#f43f5e", // rose-500
-    park: "#16a34a",       // green-600
-    museum: "#d97706",     // amber-600
-    gallery: "#9333ea",    // purple-600
-    science_centre: "#2563eb", // blue-600
-    planetarium: "#4f46e5", // indigo-600
+  const emojiMap: Record<string, string> = {
+    playground: "🎪",
+    park: "🌳",
+    museum: "🏛️",
+    gallery: "🎨",
+    science_centre: "🔬",
+    planetarium: "🌌",
+    restaurant: "🍽️",
+    cafe: "☕",
   };
 
-  const color = colorMap[type] || "#16a34a";
-  const savedClass = isSaved ? "ring-2 ring-yellow-400 ring-offset-2" : "";
+  const emoji = emojiMap[type] || "📍";
+  const savedClass = isSaved ? "ring-4 ring-yellow-400" : "";
 
   return new DivIcon({
     className: "bg-transparent",
     html: `
-      <div class="relative w-8 h-8 transform transition-transform hover:scale-110">
-        <div class="absolute inset-0 rounded-full bg-white shadow-md ${savedClass}"></div>
-        <div class="absolute inset-1 rounded-full flex items-center justify-center text-white" style="background-color: ${color}">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+      <div class="relative w-12 h-12 transform transition-transform hover:scale-125" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
+        <div class="absolute inset-0 rounded-full bg-white border-4 border-blue-500 shadow-lg ${savedClass} flex items-center justify-center text-lg leading-none">
+          ${emoji}
         </div>
       </div>
     `,
-    iconSize: [32, 32],
-    iconAnchor: [16, 32],
-    popupAnchor: [0, -32],
+    iconSize: [48, 48],
+    iconAnchor: [24, 48],
+    popupAnchor: [0, -48],
   });
 };
 
