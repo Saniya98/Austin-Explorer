@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import { useSavedPlaces, useDeleteSavedPlace } from "@/hooks/use-places";
 import { Badge } from "@/components/ui/badge";
 
@@ -38,14 +39,9 @@ const CATEGORIES = [
 
 export function Sidebar({ selectedCategories, onToggleCategory, onSelectPlace }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchPlaces, setSearchPlaces] = useState("");
   const { data: savedPlaces, isLoading } = useSavedPlaces();
   const deleteMutation = useDeleteSavedPlace();
-
-  const filteredCategories = CATEGORIES.filter((cat) =>
-    cat.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    cat.id.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   return (
     <>
@@ -76,73 +72,61 @@ export function Sidebar({ selectedCategories, onToggleCategory, onSelectPlace }:
             {/* Content */}
             <ScrollArea className="flex-1 px-4">
               <div className="py-4 space-y-6">
-                {/* Category Filters */}
+                {/* Activities Section */}
                 <div className="space-y-3">
-                  <input
-                    type="text"
-                    placeholder="Search categories..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                    data-testid="input-search-categories"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-2">Filters</h3>
-                  <div className="space-y-1 mt-2">
-                    {filteredCategories.length > 0 ? (
-                      filteredCategories.map((cat) => (
-                        <button
-                          key={cat.id}
-                          type="button"
-                          onClick={() => onToggleCategory(cat.id)}
-                          className={cn(
-                            "w-full flex items-center justify-between p-3 rounded-xl text-left transition-all duration-200 border cursor-pointer",
-                            selectedCategories.includes(cat.id)
-                              ? "bg-card border-primary/20 shadow-sm"
-                              : "bg-transparent border-transparent hover:bg-muted/50 text-muted-foreground"
-                          )}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className={cn("p-2 rounded-lg bg-background", selectedCategories.includes(cat.id) ? "shadow-sm" : "")}>
-                              <cat.icon className={cn("w-4 h-4", selectedCategories.includes(cat.id) ? cat.color : "text-muted-foreground")} />
-                            </div>
-                            <span className="font-medium text-sm">{cat.label}</span>
-                          </div>
-                          {selectedCategories.includes(cat.id) && (
-                            <motion.div
-                              layoutId="check"
-                              className="w-2 h-2 rounded-full bg-primary"
-                            />
-                          )}
-                        </button>
-                      ))
-                    ) : (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <p className="text-sm">No categories found</p>
-                        <p className="text-xs mt-1">Try a different search</p>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-1">Activities</h3>
+                  <div className="space-y-2.5">
+                    {CATEGORIES.map((cat) => (
+                      <div key={cat.id} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <cat.icon className={cn("w-4 h-4", cat.color)} />
+                          <label className="text-sm font-medium cursor-pointer">{cat.label}</label>
+                        </div>
+                        <Switch
+                          checked={selectedCategories.includes(cat.id)}
+                          onCheckedChange={() => onToggleCategory(cat.id)}
+                          data-testid={`toggle-${cat.id}`}
+                        />
                       </div>
-                    )}
+                    ))}
                   </div>
                 </div>
 
-                {/* Saved Places */}
-                <div className="space-y-3 pt-4 border-t border-border/50">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-2">Saved Places</h3>
-                  
-                  {isLoading ? (
-                    <div className="p-8 text-center text-muted-foreground">
-                      <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-2" />
-                      <p className="text-sm">Loading...</p>
-                    </div>
-                  ) : savedPlaces?.length === 0 ? (
-                    <div className="p-6 text-center bg-muted/20 rounded-xl border border-dashed border-border">
-                      <p className="text-sm text-muted-foreground font-medium">No saved places yet</p>
-                      <p className="text-xs text-muted-foreground/70 mt-1">Click on map markers to save them here.</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {savedPlaces?.map((place) => {
+                {/* Search Places */}
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    placeholder="Search places..."
+                    value={searchPlaces}
+                    onChange={(e) => setSearchPlaces(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    data-testid="input-search-places"
+                  />
+                </div>
+
+                {/* About This Map */}
+                <div className="px-1 pt-2">
+                  <div className="bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30 rounded-lg p-3">
+                    <h4 className="font-semibold text-blue-900 dark:text-blue-100 text-xs mb-1">About this Map</h4>
+                    <p className="text-xs text-blue-800/80 dark:text-blue-200/70 leading-relaxed">
+                      Discover the best family-friendly places in Austin. Data is sourced live from OpenStreetMap to ensure accuracy.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Data Attribution */}
+                <div className="px-1 pt-2 border-t border-border/30">
+                  <p className="text-xs text-muted-foreground/60 leading-relaxed">
+                    Data from <span className="font-medium">OpenStreetMap</span> powered by <span className="font-medium">Leaflet</span> & <span className="font-medium">Overpass API</span>
+                  </p>
+                </div>
+
+                {/* Saved Places Section */}
+                {savedPlaces && savedPlaces.length > 0 && (
+                  <div className="space-y-3 pt-4 border-t border-border/30">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-1">Saved Places</h3>
+                    <div className="space-y-2">
+                      {savedPlaces.map((place) => {
                         const cat = CATEGORIES.find(c => c.id === place.type) || CATEGORIES[1];
                         const Icon = cat.icon;
                         
@@ -151,47 +135,36 @@ export function Sidebar({ selectedCategories, onToggleCategory, onSelectPlace }:
                             key={place.id}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="group bg-card rounded-xl border border-border/50 p-3 hover:shadow-md hover:border-primary/20 transition-all duration-300"
+                            className="group bg-card/50 rounded-lg border border-border/30 p-2.5 hover:shadow-sm hover:border-primary/20 transition-all duration-300"
                           >
                             <div className="flex items-start justify-between gap-2">
                               <div 
                                 className="flex-1 cursor-pointer"
                                 onClick={() => onSelectPlace(place.lat, place.lon)}
                               >
-                                <div className="flex items-center gap-2 mb-1">
+                                <div className="flex items-center gap-2 mb-0.5">
                                   <Icon className={cn("w-3 h-3", cat.color)} />
-                                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 font-normal text-muted-foreground border-border/50">
-                                    {cat.label}
-                                  </Badge>
+                                  <p className="font-semibold text-xs text-foreground">
+                                    {place.name}
+                                  </p>
                                 </div>
-                                <h4 className="font-bold text-sm text-foreground mb-1 group-hover:text-primary transition-colors">
-                                  {place.name}
-                                </h4>
                                 {place.address && (
-                                  <p className="text-xs text-muted-foreground line-clamp-1">{place.address}</p>
+                                  <p className="text-xs text-muted-foreground/70 line-clamp-1 ml-5">{place.address}</p>
                                 )}
                               </div>
-                              <div className="flex flex-col gap-1">
-                                <button
-                                  onClick={() => onSelectPlace(place.lat, place.lon)}
-                                  className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                                >
-                                  <ExternalLink className="w-3.5 h-3.5" />
-                                </button>
-                                <button
-                                  onClick={() => deleteMutation.mutate(place.id)}
-                                  className="p-1.5 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-500 transition-colors"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
+                              <button
+                                onClick={() => deleteMutation.mutate(place.id)}
+                                className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/30 text-muted-foreground hover:text-red-500 transition-colors flex-shrink-0"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
                             </div>
                           </motion.div>
                         );
                       })}
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </ScrollArea>
           </motion.div>
