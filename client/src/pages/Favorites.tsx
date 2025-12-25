@@ -16,6 +16,13 @@ const CATEGORIES: Record<string, string> = {
   planetarium: "Planetarium",
 };
 
+const getDisplayName = (place: { name: string; type: string }) => {
+  if (place.name.includes("(Unnamed)")) {
+    return `Unnamed ${CATEGORIES[place.type] || place.type}`;
+  }
+  return place.name;
+};
+
 export default function Favorites() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { data: savedPlaces, isLoading } = useSavedPlaces();
@@ -100,7 +107,7 @@ export default function Favorites() {
                         <div className="flex items-start justify-between gap-2 mb-3">
                           <div>
                             <h3 className="font-semibold" data-testid={`text-place-name-${place.id}`}>
-                              {place.name}
+                              {getDisplayName(place)}
                             </h3>
                             {place.address && (
                               <p className="text-xs text-muted-foreground">{place.address}</p>
@@ -162,7 +169,7 @@ export default function Favorites() {
                         <div className="flex items-start justify-between gap-2 mb-3">
                           <div>
                             <h3 className="font-semibold" data-testid={`text-place-name-${place.id}`}>
-                              {place.name}
+                              {getDisplayName(place)}
                             </h3>
                             {place.address && (
                               <p className="text-xs text-muted-foreground">{place.address}</p>
