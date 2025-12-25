@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import "leaflet/dist/leaflet.css";
 
 // Custom icons setup with emojis
-const createCustomIcon = (type: string, isSaved: boolean) => {
+const createCustomIcon = (type: string, isFavorited: boolean) => {
   const emojiMap: Record<string, string> = {
     playground: "🛝",
     park: "🌳",
@@ -23,15 +23,19 @@ const createCustomIcon = (type: string, isSaved: boolean) => {
   };
 
   const emoji = emojiMap[type] || "📍";
-  const savedClass = isSaved ? "ring-4 ring-yellow-400 ring-offset-2" : "";
 
   return new DivIcon({
     className: "bg-transparent",
     html: `
       <div class="relative w-12 h-12 transform transition-transform hover:scale-125">
-        <div class="absolute inset-0 rounded-full bg-white shadow-lg border-3 border-blue-500 ${savedClass} flex items-center justify-center text-2xl">
+        <div class="absolute inset-0 rounded-full bg-white shadow-lg border-2 border-gray-200 flex items-center justify-center text-2xl">
           ${emoji}
         </div>
+        ${isFavorited ? `
+          <div class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 flex items-center justify-center shadow-md">
+            <span class="text-white text-xs">❤️</span>
+          </div>
+        ` : ''}
       </div>
     `,
     iconSize: [48, 48],
@@ -290,11 +294,11 @@ export default function MapComponent({ categories, flyToCoords, searchQuery = ""
                   )}
                 </div>
 
-                <div className="flex items-center justify-between border-t border-border/30 pt-3">
+                <div className="flex items-center justify-between border-t border-border/30 pt-3 gap-2">
                   <button
                     onClick={() => handleGetDirections(place)}
                     disabled={isGettingRoute || !userLocation}
-                    className="flex items-center gap-1 text-sm font-medium text-primary hover:text-primary/80 transition-colors cursor-pointer disabled:opacity-50"
+                    className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50"
                     data-testid={`button-directions-${place.id}`}
                   >
                     {isGettingRoute ? (
@@ -310,29 +314,31 @@ export default function MapComponent({ categories, flyToCoords, searchQuery = ""
                   <button
                     onClick={() => handleToggleFavorite(place)}
                     disabled={saveMutation.isPending || deleteMutation.isPending}
-                    className={`flex items-center gap-1 text-sm font-medium transition-colors cursor-pointer disabled:opacity-50 ${
+                    className={`flex items-center gap-1.5 text-sm font-medium transition-all cursor-pointer disabled:opacity-50 px-2 py-1 rounded-full ${
                       isFavorited 
-                        ? "text-red-500 hover:text-red-600" 
+                        ? "bg-red-100 text-red-600" 
                         : "text-muted-foreground hover:text-red-500"
                     }`}
                     data-testid={`button-favorite-${place.id}`}
                   >
-                    <Heart className={`w-4 h-4 ${isFavorited ? "fill-current" : ""}`} />
-                    {isFavorited ? "Favorited" : "Favorite"}
+                    <Heart className={`w-4 h-4 ${isFavorited ? "fill-red-500 text-red-500" : ""}`} />
+                    Favorited
                   </button>
                   
                   <button
                     onClick={() => handleToggleVisited(place)}
                     disabled={toggleVisitedMutation.isPending || saveMutation.isPending}
-                    className={`flex items-center gap-1 text-sm font-medium transition-colors cursor-pointer disabled:opacity-50 ${
-                      isVisited 
-                        ? "text-green-600" 
-                        : "text-muted-foreground hover:text-green-600"
-                    }`}
+                    className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50"
                     data-testid={`button-visited-${place.id}`}
                   >
-                    <Check className={`w-4 h-4 ${isVisited ? "bg-green-600 text-white rounded-sm p-0.5" : ""}`} />
-                    {isVisited ? "Visited" : "Mark visited"}
+                    <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
+                      isVisited 
+                        ? "bg-green-600 border-green-600" 
+                        : "border-gray-400"
+                    }`}>
+                      {isVisited && <Check className="w-3 h-3 text-white" />}
+                    </div>
+                    Mark visited
                   </button>
                 </div>
               </div>
