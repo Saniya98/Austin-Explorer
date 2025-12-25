@@ -1,9 +1,9 @@
-import { useEffect, useState, useMemo, useRef } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap, ZoomControl, Polyline } from "react-leaflet";
+import { useEffect, useState, useMemo } from "react";
+import { MapContainer, TileLayer, Marker, Popup, useMap, ZoomControl } from "react-leaflet";
 import { Icon, DivIcon, LatLngBounds } from "leaflet";
 import { useSearchPlaces, useSavePlace, useSavedPlaces, useDeleteSavedPlace, useToggleVisited, useToggleFavorited } from "@/hooks/use-places";
 import { Button } from "@/components/ui/button";
-import { Loader2, Bookmark, MapPin, Navigation, ArrowRight, Heart, Check } from "lucide-react";
+import { Loader2, MapPin, Navigation, Heart, Check } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -70,9 +70,6 @@ export default function MapComponent({ categories, flyToCoords, searchQuery = ""
   const { toast } = useToast();
   
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
-  const [routeCoords, setRouteCoords] = useState<[number, number][] | null>(null);
-  const [isGettingRoute, setIsGettingRoute] = useState(false);
-  const routeToPlace = useRef<[number, number] | null>(null);
 
   const austinCoords: [number, number] = [30.2672, -97.7431];
 
@@ -198,59 +195,12 @@ export default function MapComponent({ categories, flyToCoords, searchQuery = ""
     }
   };
 
-  const handleGetDirections = async (place: any) => {
-    if (!userLocation) {
-      toast({
-        variant: "destructive",
-        title: "Unable to Get Directions",
-        description: "Could not determine location. Please try again.",
-      });
-      return;
-    }
-
-    setIsGettingRoute(true);
-    routeToPlace.current = [place.lat, place.lon];
-
-    try {
-      // Use OSRM (Open Source Routing Machine) for free routing
-      const response = await fetch(
-        `https://router.project-osrm.org/route/v1/driving/${userLocation[1]},${userLocation[0]};${place.lon},${place.lat}?geometries=geojson&steps=true&overview=full`
-      );
-
-      if (!response.ok) {
-        throw new Error(`Route API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data.routes && data.routes.length > 0) {
-        const route = data.routes[0];
-        const coords = route.geometry.coordinates.map((coord: [number, number]) => [
-          coord[1],
-          coord[0],
-        ]) as [number, number][];
-
-        setRouteCoords(coords);
-        const distanceKm = (route.distance / 1000).toFixed(1);
-        const durationMins = Math.round(route.duration / 60);
-        toast({
-          title: "Directions Ready",
-          description: `${distanceKm}km away • ${durationMins} min drive`,
-          duration: 4000,
-        });
-      } else {
-        throw new Error("No route available");
-      }
-    } catch (error: any) {
-      console.error("Route error:", error);
-      toast({
-        variant: "destructive",
-        title: "Could Not Calculate Route",
-        description: "Please try a different location or check your internet connection.",
-      });
-    } finally {
-      setIsGettingRoute(false);
-    }
+  const handleGetDirections = (place: any) => {
+    // Open Google Maps directions in a new tab
+    window.open(
+      `https://www.google.com/maps/dir/?api=1&destination=${place.lat},${place.lon}`,
+      '_blank'
+    );
   };
 
   // We memoize markers to prevent unnecessary re-renders
@@ -306,18 +256,11 @@ export default function MapComponent({ categories, flyToCoords, searchQuery = ""
                 <div className="flex items-center justify-between border-t border-border/30 pt-3 gap-2">
                   <button
                     onClick={() => handleGetDirections(place)}
-                    disabled={isGettingRoute || !userLocation}
-                    className="flex flex-col items-center gap-0.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50"
+                    className="flex flex-col items-center gap-0.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                     data-testid={`button-directions-${place.id}`}
                   >
-                    {isGettingRoute ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <>
-                        <Navigation className="w-4 h-4" />
-                        <span>Directions</span>
-                      </>
-                    )}
+                    <Navigation className="w-4 h-4" />
+                    <span>Directions</span>
                   </button>
                   
                   <button
@@ -394,12 +337,7 @@ export default function MapComponent({ categories, flyToCoords, searchQuery = ""
           })} />
         )}
 
-        {/* Route polyline */}
-        {routeCoords && (
-          <Polyline positions={routeCoords} color="#3b82f6" weight={4} opacity={0.7} />
-        )}
-        
-        <MapController coords={flyToCoords || routeToPlace.current} />
+        <MapController coords={flyToCoords} />
       </MapContainer>
 
       {/* Loading State Overlay */}
