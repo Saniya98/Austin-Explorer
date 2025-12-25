@@ -33,6 +33,7 @@ export async function registerRoutes(
         type: input.type,
         address: input.address,
         notes: input.notes,
+        visited: false,
         userId 
       });
       res.status(201).json(place);
