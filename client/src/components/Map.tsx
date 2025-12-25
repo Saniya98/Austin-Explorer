@@ -298,7 +298,7 @@ export default function MapComponent({ categories, flyToCoords, searchQuery = ""
                   <button
                     onClick={() => handleGetDirections(place)}
                     disabled={isGettingRoute || !userLocation}
-                    className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50"
+                    className="flex flex-col items-center gap-0.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50"
                     data-testid={`button-directions-${place.id}`}
                   >
                     {isGettingRoute ? (
@@ -306,7 +306,7 @@ export default function MapComponent({ categories, flyToCoords, searchQuery = ""
                     ) : (
                       <>
                         <Navigation className="w-4 h-4" />
-                        Directions
+                        <span>Directions</span>
                       </>
                     )}
                   </button>
@@ -314,31 +314,35 @@ export default function MapComponent({ categories, flyToCoords, searchQuery = ""
                   <button
                     onClick={() => handleToggleFavorite(place)}
                     disabled={saveMutation.isPending || deleteMutation.isPending}
-                    className={`flex items-center gap-1.5 text-sm transition-all cursor-pointer disabled:opacity-50 px-3 py-1 rounded-full ${
+                    className={`flex flex-col items-center gap-0.5 text-xs transition-all cursor-pointer disabled:opacity-50 px-4 py-1.5 rounded-full ${
                       isFavorited 
                         ? "bg-rose-100 text-rose-600" 
-                        : "text-muted-foreground hover:bg-rose-50"
+                        : "bg-gray-100 text-muted-foreground hover:bg-gray-200"
                     }`}
                     data-testid={`button-favorite-${place.id}`}
                   >
-                    <Heart className={`w-3.5 h-3.5 ${isFavorited ? "fill-rose-500 text-rose-500" : ""}`} />
-                    Favorited
+                    <Heart className={`w-4 h-4 ${isFavorited ? "fill-rose-500 text-rose-500" : ""}`} />
+                    <span>Favorited</span>
                   </button>
                   
                   <button
                     onClick={() => handleToggleVisited(place)}
                     disabled={toggleVisitedMutation.isPending || saveMutation.isPending}
-                    className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50"
+                    className={`flex flex-col items-center gap-0.5 text-xs transition-all cursor-pointer disabled:opacity-50 px-4 py-1.5 rounded-full ${
+                      isVisited 
+                        ? "bg-emerald-100 text-emerald-600" 
+                        : "bg-gray-100 text-muted-foreground hover:bg-gray-200"
+                    }`}
                     data-testid={`button-visited-${place.id}`}
                   >
                     <div className={`w-4 h-4 rounded border flex items-center justify-center ${
                       isVisited 
                         ? "bg-emerald-500 border-emerald-500" 
-                        : "border-gray-300"
+                        : "border-gray-400 bg-white"
                     }`}>
                       {isVisited && <Check className="w-3 h-3 text-white" />}
                     </div>
-                    Mark visited
+                    <span>Mark visited</span>
                   </button>
                 </div>
               </div>
