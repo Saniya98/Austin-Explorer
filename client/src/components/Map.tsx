@@ -32,8 +32,8 @@ const createCustomIcon = (type: string, isFavorited: boolean) => {
           ${emoji}
         </div>
         ${isFavorited ? `
-          <div class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 flex items-center justify-center shadow-md">
-            <span class="text-white text-xs">❤️</span>
+          <div class="absolute -top-1 -right-1 text-base" style="filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));">
+            ❤️
           </div>
         ` : ''}
       </div>
@@ -314,27 +314,27 @@ export default function MapComponent({ categories, flyToCoords, searchQuery = ""
                   <button
                     onClick={() => handleToggleFavorite(place)}
                     disabled={saveMutation.isPending || deleteMutation.isPending}
-                    className={`flex items-center gap-1.5 text-sm font-medium transition-all cursor-pointer disabled:opacity-50 px-2 py-1 rounded-full ${
+                    className={`flex items-center gap-1.5 text-sm transition-all cursor-pointer disabled:opacity-50 px-3 py-1 rounded-full ${
                       isFavorited 
-                        ? "bg-red-100 text-red-600" 
-                        : "text-muted-foreground hover:text-red-500"
+                        ? "bg-rose-100 text-rose-600" 
+                        : "text-muted-foreground hover:bg-rose-50"
                     }`}
                     data-testid={`button-favorite-${place.id}`}
                   >
-                    <Heart className={`w-4 h-4 ${isFavorited ? "fill-red-500 text-red-500" : ""}`} />
+                    <Heart className={`w-3.5 h-3.5 ${isFavorited ? "fill-rose-500 text-rose-500" : ""}`} />
                     Favorited
                   </button>
                   
                   <button
                     onClick={() => handleToggleVisited(place)}
                     disabled={toggleVisitedMutation.isPending || saveMutation.isPending}
-                    className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50"
+                    className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50"
                     data-testid={`button-visited-${place.id}`}
                   >
-                    <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
+                    <div className={`w-4 h-4 rounded border flex items-center justify-center ${
                       isVisited 
-                        ? "bg-green-600 border-green-600" 
-                        : "border-gray-400"
+                        ? "bg-emerald-500 border-emerald-500" 
+                        : "border-gray-300"
                     }`}>
                       {isVisited && <Check className="w-3 h-3 text-white" />}
                     </div>
