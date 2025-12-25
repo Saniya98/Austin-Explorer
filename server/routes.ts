@@ -33,7 +33,8 @@ export async function registerRoutes(
         type: input.type,
         address: input.address,
         notes: input.notes,
-        visited: false,
+        isFavorited: input.isFavorited ?? false,
+        visited: input.visited ?? false,
         userId 
       });
       res.status(201).json(place);
@@ -57,6 +58,15 @@ export async function registerRoutes(
   app.patch("/api/saved-places/:id/visited", isAuthenticated, async (req: any, res) => {
     const userId = req.user.claims.sub;
     const updated = await storage.toggleVisited(Number(req.params.id), userId);
+    if (!updated) {
+      return res.status(404).json({ message: "Place not found" });
+    }
+    res.json(updated);
+  });
+
+  app.patch(api.savedPlaces.toggleFavorited.path, isAuthenticated, async (req: any, res) => {
+    const userId = req.user.claims.sub;
+    const updated = await storage.toggleFavorited(Number(req.params.id), userId);
     if (!updated) {
       return res.status(404).json({ message: "Place not found" });
     }

@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap, ZoomControl, Polyline } from "react-leaflet";
 import { Icon, DivIcon, LatLngBounds } from "leaflet";
-import { useSearchPlaces, useSavePlace, useSavedPlaces, useDeleteSavedPlace, useToggleVisited } from "@/hooks/use-places";
+import { useSearchPlaces, useSavePlace, useSavedPlaces, useDeleteSavedPlace, useToggleVisited, useToggleFavorited } from "@/hooks/use-places";
 import { Button } from "@/components/ui/button";
 import { Loader2, Bookmark, MapPin, Navigation, ArrowRight, Heart, Check } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -66,6 +66,7 @@ export default function MapComponent({ categories, flyToCoords, searchQuery = ""
   const saveMutation = useSavePlace();
   const deleteMutation = useDeleteSavedPlace();
   const toggleVisitedMutation = useToggleVisited();
+  const toggleFavoritedMutation = useToggleFavorited();
   const { toast } = useToast();
   
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
@@ -102,14 +103,8 @@ export default function MapComponent({ categories, flyToCoords, searchQuery = ""
     const saved = getSavedPlace(place.id);
     
     try {
-      if (saved) {
-        await deleteMutation.mutateAsync(saved.id);
-        toast({
-          title: "Removed from favorites",
-          description: `${place.name || "Location"} has been removed.`,
-          duration: 2000,
-        });
-      } else {
+      if (!saved) {
+        // Create a new entry with isFavorited = true
         await saveMutation.mutateAsync({
           osmId: place.id.toString(),
           name: place.name || "Unnamed Location",
@@ -118,10 +113,22 @@ export default function MapComponent({ categories, flyToCoords, searchQuery = ""
           type: place.type,
           address: place.tags?.['addr:street'] || "",
           notes: "",
+          isFavorited: true,
+          visited: false,
         });
         toast({
           title: "Added to favorites",
           description: `${place.name || "Location"} has been favorited.`,
+          duration: 2000,
+        });
+      } else {
+        // Toggle the isFavorited status
+        await toggleFavoritedMutation.mutateAsync(saved.id);
+        toast({
+          title: saved.isFavorited ? "Removed from favorites" : "Added to favorites",
+          description: saved.isFavorited 
+            ? `${place.name || "Location"} has been removed from favorites.`
+            : `${place.name || "Location"} has been favorited.`,
           duration: 2000,
         });
       }
@@ -147,6 +154,7 @@ export default function MapComponent({ categories, flyToCoords, searchQuery = ""
     
     try {
       if (!saved) {
+        // Create a new entry with visited = true, isFavorited = false
         const newPlace = await saveMutation.mutateAsync({
           osmId: place.id.toString(),
           name: place.name || "Unnamed Location",
@@ -155,8 +163,9 @@ export default function MapComponent({ categories, flyToCoords, searchQuery = ""
           type: place.type,
           address: place.tags?.['addr:street'] || "",
           notes: "",
+          isFavorited: false,
+          visited: true,
         });
-        await toggleVisitedMutation.mutateAsync(newPlace.id);
         toast({
           title: "Marked as visited",
           description: `${place.name || "Location"} has been marked as visited.`,
@@ -263,7 +272,7 @@ export default function MapComponent({ categories, flyToCoords, searchQuery = ""
       .slice(0, 100)
       .map((place) => {
         const savedPlace = getSavedPlace(place.id);
-        const isFavorited = !!savedPlace;
+        const isFavorited = savedPlace?.isFavorited ?? false;
         const isVisited = savedPlace?.visited ?? false;
         
         return (

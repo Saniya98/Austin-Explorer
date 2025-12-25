@@ -16,6 +16,7 @@ export const savedPlaces = pgTable("saved_places", {
   type: text("type").notNull(), // e.g., "playground", "museum"
   address: text("address"),
   notes: text("notes"),
+  isFavorited: boolean("is_favorited").default(false), // Favorited (shows heart)
   visited: boolean("visited").default(false), // Mark as visited
 });
 

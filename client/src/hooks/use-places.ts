@@ -111,3 +111,23 @@ export function useToggleVisited() {
     },
   });
 }
+
+export function useToggleFavorited() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`/api/saved-places/${id}/favorite`, {
+        method: "PATCH",
+        credentials: "include",
+      });
+
+      if (res.status === 401) throw new Error("401: Unauthorized");
+      if (res.status === 404) throw new Error("Place not found");
+      if (!res.ok) throw new Error("Failed to toggle favorite status");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.savedPlaces.list.path] });
+    },
+  });
+}

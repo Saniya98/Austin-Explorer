@@ -14,6 +14,7 @@ export interface IStorage {
   createSavedPlace(place: CreateSavedPlaceInput): Promise<SavedPlace>;
   deleteSavedPlace(id: number, userId: string): Promise<void>;
   toggleVisited(id: number, userId: string): Promise<SavedPlace | null>;
+  toggleFavorited(id: number, userId: string): Promise<SavedPlace | null>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -40,6 +41,19 @@ export class DatabaseStorage implements IStorage {
     
     const [updated] = await db.update(savedPlaces)
       .set({ visited: !existing.visited })
+      .where(and(eq(savedPlaces.id, id), eq(savedPlaces.userId, userId)))
+      .returning();
+    return updated;
+  }
+
+  async toggleFavorited(id: number, userId: string): Promise<SavedPlace | null> {
+    const [existing] = await db.select().from(savedPlaces).where(
+      and(eq(savedPlaces.id, id), eq(savedPlaces.userId, userId))
+    );
+    if (!existing) return null;
+    
+    const [updated] = await db.update(savedPlaces)
+      .set({ isFavorited: !existing.isFavorited })
       .where(and(eq(savedPlaces.id, id), eq(savedPlaces.userId, userId)))
       .returning();
     return updated;

@@ -59,6 +59,14 @@ export const api = {
         404: errorSchemas.notFound,
       },
     },
+    toggleFavorited: {
+      method: 'PATCH' as const,
+      path: '/api/saved-places/:id/favorite',
+      responses: {
+        200: z.custom<typeof savedPlaces.$inferSelect>(),
+        404: errorSchemas.notFound,
+      },
+    },
   }
 };
 
