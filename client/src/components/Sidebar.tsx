@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { useSavedPlaces, useDeleteSavedPlace, useToggleVisited } from "@/hooks/use-places";
+import { useSavedPlaces, useDeleteSavedPlace, useToggleVisited, useToggleFavorited } from "@/hooks/use-places";
 import { useAuth } from "@/hooks/use-auth";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -52,10 +52,22 @@ export function Sidebar({ selectedCategories, onToggleCategory, onSelectPlace, s
   const { data: savedPlaces, isLoading } = useSavedPlaces();
   const deleteMutation = useDeleteSavedPlace();
   const toggleVisitedMutation = useToggleVisited();
+  const toggleFavoritedMutation = useToggleFavorited();
 
-  const filteredSavedPlaces = (savedPlaces || []).filter((place) =>
-    place.name.toLowerCase().includes(searchPlaces.toLowerCase()) ||
-    (place.address && place.address.toLowerCase().includes(searchPlaces.toLowerCase()))
+  const allPlaces = savedPlaces || [];
+  
+  const favoritedPlaces = allPlaces.filter((place) =>
+    place.isFavorited && (
+      place.name.toLowerCase().includes(searchPlaces.toLowerCase()) ||
+      (place.address && place.address.toLowerCase().includes(searchPlaces.toLowerCase()))
+    )
+  );
+  
+  const visitedPlaces = allPlaces.filter((place) =>
+    place.visited && (
+      place.name.toLowerCase().includes(searchPlaces.toLowerCase()) ||
+      (place.address && place.address.toLowerCase().includes(searchPlaces.toLowerCase()))
+    )
   );
 
   return (
@@ -183,30 +195,23 @@ export function Sidebar({ selectedCategories, onToggleCategory, onSelectPlace, s
                   </p>
                 </div>
 
-                {/* Saved Places Section - Only show if authenticated */}
+                {/* Favorited Section - Only show if authenticated */}
                 {isAuthenticated && (
                   <div className="space-y-3 pt-4 border-t border-border/30">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-1">
-                      My Saved Places {savedPlaces && savedPlaces.length > 0 && `(${savedPlaces.length})`}
+                      Favorited {favoritedPlaces.length > 0 && `(${favoritedPlaces.length})`}
                     </h3>
                     {isLoading ? (
                       <div className="space-y-2">
-                        {[1, 2].map((i) => (
-                          <div key={i} className="h-16 bg-muted/30 rounded-lg animate-pulse" />
-                        ))}
+                        <div className="h-16 bg-muted/30 rounded-lg animate-pulse" />
                       </div>
-                    ) : !savedPlaces || savedPlaces.length === 0 ? (
-                      <div className="text-center py-4 text-muted-foreground">
-                        <p className="text-xs">No saved places yet</p>
-                        <p className="text-xs mt-1">Click on a map marker to save it</p>
-                      </div>
-                    ) : filteredSavedPlaces.length === 0 ? (
-                      <div className="text-center py-4 text-muted-foreground">
-                        <p className="text-xs">No places match "{searchPlaces}"</p>
+                    ) : favoritedPlaces.length === 0 ? (
+                      <div className="text-center py-3 text-muted-foreground">
+                        <p className="text-xs">No favorited places yet</p>
                       </div>
                     ) : (
                       <div className="space-y-2">
-                        {filteredSavedPlaces.map((place) => {
+                        {favoritedPlaces.map((place) => {
                           const cat = CATEGORIES.find(c => c.id === place.type) || CATEGORIES[1];
                           const Icon = cat.icon;
                           
@@ -215,10 +220,7 @@ export function Sidebar({ selectedCategories, onToggleCategory, onSelectPlace, s
                               key={place.id}
                               initial={{ opacity: 0, y: 10 }}
                               animate={{ opacity: 1, y: 0 }}
-                              className={cn(
-                                "group bg-card/50 rounded-lg border border-border/30 p-2.5 hover:shadow-sm hover:border-primary/20 transition-all duration-300",
-                                place.visited && "bg-green-50/50 dark:bg-green-950/20 border-green-200/50 dark:border-green-900/30"
-                              )}
+                              className="group bg-card/50 rounded-lg border border-border/30 p-2.5 hover:shadow-sm hover:border-primary/20 transition-all duration-300"
                             >
                               <div className="flex items-start justify-between gap-2">
                                 <div 
@@ -227,17 +229,73 @@ export function Sidebar({ selectedCategories, onToggleCategory, onSelectPlace, s
                                 >
                                   <div className="flex items-center gap-2 mb-0.5">
                                     <Icon className={cn("w-3 h-3", cat.color)} />
-                                    <p className={cn(
-                                      "font-semibold text-xs text-foreground",
-                                      place.visited && "line-through text-muted-foreground"
-                                    )}>
+                                    <p className="font-semibold text-xs text-foreground">
                                       {place.name}
                                     </p>
-                                    {place.visited && (
-                                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
-                                        Visited
-                                      </Badge>
-                                    )}
+                                  </div>
+                                  {place.address && (
+                                    <p className="text-xs text-muted-foreground/70 line-clamp-1 ml-5">{place.address}</p>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                  <button
+                                    onClick={() => toggleFavoritedMutation.mutate(place.id)}
+                                    className="p-1 rounded text-red-500 hover:text-red-600 transition-colors"
+                                    title="Remove from favorites"
+                                    data-testid={`unfavorite-${place.id}`}
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              </div>
+                            </motion.div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Visited Section - Only show if authenticated */}
+                {isAuthenticated && (
+                  <div className="space-y-3 pt-4 border-t border-border/30">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-1">
+                      Visited {visitedPlaces.length > 0 && `(${visitedPlaces.length})`}
+                    </h3>
+                    {isLoading ? (
+                      <div className="space-y-2">
+                        <div className="h-16 bg-muted/30 rounded-lg animate-pulse" />
+                      </div>
+                    ) : visitedPlaces.length === 0 ? (
+                      <div className="text-center py-3 text-muted-foreground">
+                        <p className="text-xs">No visited places yet</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {visitedPlaces.map((place) => {
+                          const cat = CATEGORIES.find(c => c.id === place.type) || CATEGORIES[1];
+                          const Icon = cat.icon;
+                          
+                          return (
+                            <motion.div
+                              key={place.id}
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              className="group bg-green-50/50 dark:bg-green-950/20 rounded-lg border border-green-200/50 dark:border-green-900/30 p-2.5 hover:shadow-sm transition-all duration-300"
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <div 
+                                  className="flex-1 cursor-pointer"
+                                  onClick={() => onSelectPlace(place.lat, place.lon)}
+                                >
+                                  <div className="flex items-center gap-2 mb-0.5">
+                                    <Icon className={cn("w-3 h-3", cat.color)} />
+                                    <p className="font-semibold text-xs text-foreground">
+                                      {place.name}
+                                    </p>
+                                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
+                                      Visited
+                                    </Badge>
                                   </div>
                                   {place.address && (
                                     <p className="text-xs text-muted-foreground/70 line-clamp-1 ml-5">{place.address}</p>
@@ -246,20 +304,11 @@ export function Sidebar({ selectedCategories, onToggleCategory, onSelectPlace, s
                                 <div className="flex items-center gap-1 flex-shrink-0">
                                   <button
                                     onClick={() => toggleVisitedMutation.mutate(place.id)}
-                                    className={cn(
-                                      "p-1 rounded transition-colors",
-                                      place.visited 
-                                        ? "text-green-600 hover:text-green-700" 
-                                        : "text-muted-foreground hover:text-green-600"
-                                    )}
-                                    title={place.visited ? "Mark as not visited" : "Mark as visited"}
+                                    className="p-1 rounded text-green-600 hover:text-green-700 transition-colors"
+                                    title="Mark as not visited"
                                     data-testid={`toggle-visited-${place.id}`}
                                   >
-                                    {place.visited ? (
-                                      <CheckCircle2 className="w-4 h-4" />
-                                    ) : (
-                                      <Circle className="w-4 h-4" />
-                                    )}
+                                    <CheckCircle2 className="w-4 h-4" />
                                   </button>
                                   <button
                                     onClick={() => deleteMutation.mutate(place.id)}
