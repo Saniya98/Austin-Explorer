@@ -6,10 +6,12 @@ import {
 } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 
+export type CreateSavedPlaceInput = InsertSavedPlace & { userId: string };
+
 export interface IStorage {
   // Saved Places CRUD (user-specific)
   getSavedPlaces(userId: string): Promise<SavedPlace[]>;
-  createSavedPlace(place: InsertSavedPlace): Promise<SavedPlace>;
+  createSavedPlace(place: CreateSavedPlaceInput): Promise<SavedPlace>;
   deleteSavedPlace(id: number, userId: string): Promise<void>;
   toggleVisited(id: number, userId: string): Promise<SavedPlace | null>;
 }
@@ -19,7 +21,7 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(savedPlaces).where(eq(savedPlaces.userId, userId));
   }
 
-  async createSavedPlace(place: InsertSavedPlace): Promise<SavedPlace> {
+  async createSavedPlace(place: CreateSavedPlaceInput): Promise<SavedPlace> {
     const [saved] = await db.insert(savedPlaces).values(place).returning();
     return saved;
   }

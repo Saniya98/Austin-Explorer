@@ -1,9 +1,10 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap, ZoomControl, Polyline } from "react-leaflet";
 import { Icon, DivIcon, LatLngBounds } from "leaflet";
-import { useSearchPlaces, useSavePlace, useSavedPlaces } from "@/hooks/use-places";
+import { useSearchPlaces, useSavePlace, useSavedPlaces, useDeleteSavedPlace, useToggleVisited } from "@/hooks/use-places";
 import { Button } from "@/components/ui/button";
-import { Loader2, Bookmark, MapPin, Navigation, ArrowRight } from "lucide-react";
+import { Loader2, Bookmark, MapPin, Navigation, ArrowRight, Heart, Check } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -59,6 +60,8 @@ export default function MapComponent({ categories, flyToCoords, searchQuery = ""
   const { data: places, isLoading, isError } = useSearchPlaces(categories);
   const { data: savedPlaces } = useSavedPlaces();
   const saveMutation = useSavePlace();
+  const deleteMutation = useDeleteSavedPlace();
+  const toggleVisitedMutation = useToggleVisited();
   const { toast } = useToast();
   
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
@@ -87,41 +90,99 @@ export default function MapComponent({ categories, flyToCoords, searchQuery = ""
     }
   }, [austinCoords]);
 
-  const handleSave = async (place: any) => {
+  const getSavedPlace = (osmId: number) => {
+    return savedPlaces?.find((p) => p.osmId === osmId.toString());
+  };
+
+  const handleToggleFavorite = async (place: any) => {
+    const saved = getSavedPlace(place.id);
+    
     try {
-      await saveMutation.mutateAsync({
-        osmId: place.id.toString(),
-        name: place.name || "Unnamed Location",
-        lat: place.lat,
-        lon: place.lon,
-        type: place.type,
-        address: place.tags?.['addr:street'] || "",
-        notes: "",
-      });
-      toast({
-        title: "Saved!",
-        description: `${place.name || "Location"} has been added to your saved places.`,
-        duration: 3000,
-      });
+      if (saved) {
+        await deleteMutation.mutateAsync(saved.id);
+        toast({
+          title: "Removed from favorites",
+          description: `${place.name || "Location"} has been removed.`,
+          duration: 2000,
+        });
+      } else {
+        await saveMutation.mutateAsync({
+          osmId: place.id.toString(),
+          name: place.name || "Unnamed Location",
+          lat: place.lat,
+          lon: place.lon,
+          type: place.type,
+          address: place.tags?.['addr:street'] || "",
+          notes: "",
+        });
+        toast({
+          title: "Added to favorites",
+          description: `${place.name || "Location"} has been favorited.`,
+          duration: 2000,
+        });
+      }
     } catch (error: any) {
       if (error.message?.includes("401")) {
         toast({
           variant: "destructive",
           title: "Sign in required",
-          description: "Please sign in to save places to your account.",
+          description: "Please sign in to favorite places.",
         });
       } else {
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Could not save this location. It might already be saved.",
+          description: "Could not update this location.",
         });
       }
     }
   };
 
-  const isPlaceSaved = (osmId: number) => {
-    return savedPlaces?.some((p) => p.osmId === osmId.toString());
+  const handleToggleVisited = async (place: any) => {
+    const saved = getSavedPlace(place.id);
+    
+    try {
+      if (!saved) {
+        const newPlace = await saveMutation.mutateAsync({
+          osmId: place.id.toString(),
+          name: place.name || "Unnamed Location",
+          lat: place.lat,
+          lon: place.lon,
+          type: place.type,
+          address: place.tags?.['addr:street'] || "",
+          notes: "",
+        });
+        await toggleVisitedMutation.mutateAsync(newPlace.id);
+        toast({
+          title: "Marked as visited",
+          description: `${place.name || "Location"} has been marked as visited.`,
+          duration: 2000,
+        });
+      } else {
+        await toggleVisitedMutation.mutateAsync(saved.id);
+        toast({
+          title: saved.visited ? "Unmarked" : "Marked as visited",
+          description: saved.visited 
+            ? `${place.name || "Location"} is no longer marked as visited.`
+            : `${place.name || "Location"} has been marked as visited.`,
+          duration: 2000,
+        });
+      }
+    } catch (error: any) {
+      if (error.message?.includes("401")) {
+        toast({
+          variant: "destructive",
+          title: "Sign in required",
+          description: "Please sign in to mark places as visited.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Could not update visited status.",
+        });
+      }
+    }
   };
 
   const handleGetDirections = async (place: any) => {
@@ -197,57 +258,81 @@ export default function MapComponent({ categories, flyToCoords, searchQuery = ""
       .filter(p => p.name) 
       .slice(0, 100)
       .map((place) => {
-        const isSaved = isPlaceSaved(place.id);
+        const savedPlace = getSavedPlace(place.id);
+        const isFavorited = !!savedPlace;
+        const isVisited = savedPlace?.visited ?? false;
         
         return (
           <Marker
             key={place.id}
             position={[place.lat, place.lon]}
-            icon={createCustomIcon(place.type, !!isSaved)}
+            icon={createCustomIcon(place.type, isFavorited)}
           >
             <Popup className="bg-transparent border-none shadow-none leaflet-popup-content-wrapper p-0">
-              <div className="bg-white rounded-lg p-4 shadow-lg border border-border/20 min-w-[220px]">
+              <div className="bg-white rounded-lg p-4 shadow-lg border border-border/20 min-w-[260px]">
                 <div className="mb-3">
-                  <h3 className="font-semibold text-base leading-tight text-foreground mb-2">
+                  <h3 className="font-semibold text-base leading-tight text-foreground mb-1">
                     {place.name || "Unknown Location"}
                   </h3>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs uppercase font-bold tracking-wider text-muted-foreground bg-muted px-2 py-1 rounded text-[11px]">
+                  <div className="flex items-center gap-1 mb-1">
+                    <span className="text-xs uppercase font-medium tracking-wider text-muted-foreground">
                       {place.type.replace('_', ' ')}
                     </span>
                   </div>
+                  {place.tags?.['addr:street'] && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />
+                      {place.tags['addr:housenumber'] ? `${place.tags['addr:housenumber']}, ` : ''}
+                      {place.tags['addr:street']}
+                      {place.tags['addr:city'] ? `, ${place.tags['addr:city']}` : ''}
+                      {place.tags['addr:postcode'] ? `, ${place.tags['addr:postcode']}` : ''}
+                    </p>
+                  )}
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex items-center justify-between border-t border-border/30 pt-3">
                   <button
                     onClick={() => handleGetDirections(place)}
                     disabled={isGettingRoute || !userLocation}
-                    className="flex-1 text-sm font-semibold text-primary hover:text-primary/80 transition-colors cursor-pointer disabled:opacity-50"
+                    className="flex items-center gap-1 text-sm font-medium text-primary hover:text-primary/80 transition-colors cursor-pointer disabled:opacity-50"
+                    data-testid={`button-directions-${place.id}`}
                   >
                     {isGettingRoute ? (
-                      <span className="flex items-center justify-center gap-1">
-                        <Loader2 className="w-3 h-3 animate-spin" />
-                      </span>
+                      <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
-                      "Directions"
+                      <>
+                        <Navigation className="w-4 h-4" />
+                        Directions
+                      </>
                     )}
                   </button>
+                  
                   <button
-                    onClick={() => !isSaved && handleSave(place)}
-                    disabled={isSaved || saveMutation.isPending}
-                    className={`flex-1 text-sm font-semibold transition-colors cursor-pointer ${
-                      isSaved 
-                        ? "text-muted-foreground" 
-                        : "text-primary hover:text-primary/80"
-                    } disabled:opacity-50`}
+                    onClick={() => handleToggleFavorite(place)}
+                    disabled={saveMutation.isPending || deleteMutation.isPending}
+                    className={`flex items-center gap-1 text-sm font-medium transition-colors cursor-pointer disabled:opacity-50 ${
+                      isFavorited 
+                        ? "text-red-500 hover:text-red-600" 
+                        : "text-muted-foreground hover:text-red-500"
+                    }`}
+                    data-testid={`button-favorite-${place.id}`}
                   >
-                    {saveMutation.isPending ? (
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                    ) : isSaved ? (
-                      "Saved"
-                    ) : (
-                      "Save"
-                    )}
+                    <Heart className={`w-4 h-4 ${isFavorited ? "fill-current" : ""}`} />
+                    {isFavorited ? "Favorited" : "Favorite"}
+                  </button>
+                  
+                  <button
+                    onClick={() => handleToggleVisited(place)}
+                    disabled={toggleVisitedMutation.isPending || saveMutation.isPending}
+                    className={`flex items-center gap-1 text-sm font-medium transition-colors cursor-pointer disabled:opacity-50 ${
+                      isVisited 
+                        ? "text-green-600" 
+                        : "text-muted-foreground hover:text-green-600"
+                    }`}
+                    data-testid={`button-visited-${place.id}`}
+                  >
+                    <Check className={`w-4 h-4 ${isVisited ? "bg-green-600 text-white rounded-sm p-0.5" : ""}`} />
+                    {isVisited ? "Visited" : "Mark visited"}
                   </button>
                 </div>
               </div>
@@ -255,7 +340,7 @@ export default function MapComponent({ categories, flyToCoords, searchQuery = ""
           </Marker>
         );
       });
-  }, [places, savedPlaces, saveMutation.isPending, searchQuery]);
+  }, [places, savedPlaces, saveMutation.isPending, deleteMutation.isPending, toggleVisitedMutation.isPending, searchQuery]);
 
   return (
     <div className="w-full h-full relative bg-slate-100">

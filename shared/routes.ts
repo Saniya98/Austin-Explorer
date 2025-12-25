@@ -1,5 +1,7 @@
 import { z } from 'zod';
-import { insertSavedPlaceSchema, savedPlaces, osmLocationSchema } from './schema';
+import { insertSavedPlaceSchema, savedPlaces, osmLocationSchema, SavedPlace } from './schema';
+
+export type { SavedPlace };
 
 export const errorSchemas = {
   validation: z.object({

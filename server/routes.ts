@@ -25,7 +25,16 @@ export async function registerRoutes(
     try {
       const userId = req.user.claims.sub;
       const input = api.savedPlaces.create.input.parse(req.body);
-      const place = await storage.createSavedPlace({ ...input, userId });
+      const place = await storage.createSavedPlace({ 
+        osmId: input.osmId,
+        name: input.name,
+        lat: input.lat,
+        lon: input.lon,
+        type: input.type,
+        address: input.address,
+        notes: input.notes,
+        userId 
+      });
       res.status(201).json(place);
     } catch (err) {
       if (err instanceof z.ZodError) {
